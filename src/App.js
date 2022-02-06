@@ -11,12 +11,15 @@ import {
   updateDoc,
   getDoc,
 } from "firebase/firestore";
+import React from "react";
 import { db } from "./lib/firebase";
 import { useEffect, useState } from "react";
 import TopMenu from "./components/TopMenu";
 import AddItem from "./components/AddItem";
 import SnackMessage from "./components/SnackMessage";
 import ItemList from "./components/ItemList";
+import { createTheme, ThemeProvider } from "@mui/material/styles";
+import useMediaQuery from "@mui/material/useMediaQuery";
 
 const getDatas = async () => {
   const q = query(collection(db, "todos"), where("done", "==", false));
@@ -42,6 +45,30 @@ function App() {
   const [severity, setSeverity] = useState("success");
 
   const [filter, setFilter] = useState("");
+
+  const prefersDarkMode = useMediaQuery("(prefers-color-scheme: light)");
+
+  const theme = React.useMemo(
+    () =>
+      createTheme({
+        palette: {
+          primary: {
+            light: "#11ac58",
+            main: "#31ac58",
+            dark: "#208f68",
+            contrastText: "#fff",
+          },
+          secondary: {
+            light: "#ff7961",
+            main: "#f44336",
+            dark: "#ba000d",
+            contrastText: "#000",
+          },
+          mode: prefersDarkMode ? "dark" : "light",
+        },
+      }),
+    [prefersDarkMode]
+  );
 
   useEffect(() => {
     document.title = "Todo App";
@@ -101,8 +128,10 @@ function App() {
       let array = await getDatas();
       array = array.filter((entry) => {
         return (
-          entry.data.title.includes(target.value) ||
-          entry.data.description.includes(target.value)
+          entry.data.title.toLowerCase().includes(target.value.toLowerCase()) ||
+          entry.data.description
+            .toLowerCase()
+            .includes(target.value.toLowerCase())
         );
       });
       setDatas(array);
@@ -153,8 +182,8 @@ function App() {
   };
 
   return (
-    <div className="App">
-      <div className="App-header">
+    <ThemeProvider theme={theme}>
+      <div>
         <TopMenu filterHandler={handleFilter} filter={filter} />
         <ItemList
           fetchedData={fetchedData}
@@ -176,7 +205,7 @@ function App() {
           style={severity}
         />
       </div>
-    </div>
+    </ThemeProvider>
   );
 }
 
